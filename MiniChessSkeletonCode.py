@@ -94,6 +94,32 @@ class MiniChess:
         # Return a list of all the valid moves.
         # Implement basic move validation
         # Check for out-of-bounds, correct turn, move legality, etc
+        moves = []
+        for row_index, row in enumerate(game_state["board"]):
+            for col_index, piece in enumerate(row):
+                if piece[0] == game_state["turn"][0]:
+                    if piece[1] == 'p':
+                        # Can we go forward
+                        end_row = row_index - 1 if game_state["turn"] == 'white' else row_index + 1
+                        if (MiniChess.is_valid_coordinate((end_row, col_index)) and
+                            game_state["board"][end_row][col_index] == '.'):
+                            moves.append(((row_index, col_index), (end_row, col_index)))
+                        # Can we capture diagonally
+                        for column_direction in [-1, 1]:
+                            diagonal_column = col_index + column_direction
+                            if (MiniChess.is_valid_coordinate((end_row, diagonal_column)) and
+                                game_state["board"][end_row][diagonal_column] != '.' and
+                                game_state["board"][end_row][diagonal_column][0] != game_state["turn"][0]):
+                                moves.append(((row_index, col_index), (end_row, diagonal_column)))
+                    elif piece[1] == 'N':
+                        directions = ((-1, -2), (-1, 2), (1, -2), (1, 2), (-2, -1), (-2, 1), (2, -1), (2, 1))
+                        end_positions = [
+                            (row_index + x, col_index + y) for x, y in directions
+                            if MiniChess.is_valid_coordinate((row_index + x, col_index + y)) and
+                            game_state["board"][row_index + x][col_index + y][0] != game_state["turn"][0]
+                            ]
+                        for knight_position in end_positions:
+                            moves.append(((row_index, col_index), knight_position))
         return
 
     """
