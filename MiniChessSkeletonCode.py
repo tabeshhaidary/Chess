@@ -120,7 +120,40 @@ class MiniChess:
                             ]
                         for knight_position in end_positions:
                             moves.append(((row_index, col_index), knight_position))
-        return
+                    elif piece[1] == 'B':
+                        unit_directions = ((-1, -1), (-1, 1), (1, -1), (1, 1))
+                        for direction in unit_directions:
+                            end_row = row_index + direction[0]
+                            end_column = col_index + direction[1]
+                            while (MiniChess.is_valid_coordinate((end_row, end_column)) and
+                                game_state["board"][end_row][end_column][0] != game_state["turn"][0]):
+                                moves.append(((row_index, col_index), (end_row, end_column)))
+                                if game_state["board"][end_row][end_column] != '.':
+                                    break
+                                end_row = end_row + direction[0]
+                                end_column = end_column + direction[1]
+                    elif piece[1] == 'Q':
+                        unit_directions = ((-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1))
+                        for direction in unit_directions:
+                            end_row = row_index + direction[0]
+                            end_column = col_index + direction[1]
+                            while (MiniChess.is_valid_coordinate((end_row, end_column)) and
+                                   game_state["board"][end_row][end_column][0] != game_state["turn"][0]):
+                                moves.append(((row_index, col_index), (end_row, end_column)))
+                                if game_state["board"][end_row][end_column] != '.':
+                                    break
+                                end_row = end_row + direction[0]
+                                end_column = end_column + direction[1]
+                    elif piece[1] == 'K':
+                        directions = ((-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1))
+                        end_positions = [
+                            (row_index + x, col_index + y) for x, y in directions
+                            if MiniChess.is_valid_coordinate((row_index + x, col_index + y)) and
+                               game_state["board"][row_index + x][col_index + y][0] != game_state["turn"][0]
+                        ]
+                        for king_position in end_positions:
+                            moves.append(((row_index, col_index), king_position))
+        return moves
 
     """
     Modify to board to make a move
