@@ -54,7 +54,33 @@ class MiniChess:
     """
     def is_valid_move(self, game_state, move):
         # Check if move is in list of valid moves
-        return True
+        return move in self.valid_moves(game_state)
+
+    @staticmethod
+    def is_valid_coordinate(coordinate: tuple[int, int]):
+        indexed_row, indexed_col = coordinate
+        return -1 < indexed_row < 5 and -1 < indexed_col < 5
+
+    @staticmethod
+    def print_valid_moves(moves, game_state):
+        piece_translation = {
+            "p": 'Pawn',
+            "N": 'Knight',
+            "B": 'Bishop',
+            "Q": 'Queen',
+            "K": 'King',
+        }
+        column_translation = {
+            0: 'A',
+            1: 'B',
+            2: 'C',
+            3: 'D',
+            4: 'E',
+        }
+        for move in moves:
+            print((f'{piece_translation[game_state["board"][move[0][0]][move[0][1]][1]]} '
+                                     f'{column_translation[move[0][1]]}{5 - move[0][0]} to '
+                                     f'{column_translation[move[1][1]]}{5 - move[1][0]}'))
 
     """
     Returns a list of valid moves
@@ -68,6 +94,32 @@ class MiniChess:
         # Return a list of all the valid moves.
         # Implement basic move validation
         # Check for out-of-bounds, correct turn, move legality, etc
+        moves = []
+        for row_index, row in enumerate(game_state["board"]):
+            for col_index, piece in enumerate(row):
+                if piece[0] == game_state["turn"][0]:
+                    if piece[1] == 'p':
+                        # Can we go forward
+                        end_row = row_index - 1 if game_state["turn"] == 'white' else row_index + 1
+                        if (MiniChess.is_valid_coordinate((end_row, col_index)) and
+                            game_state["board"][end_row][col_index] == '.'):
+                            moves.append(((row_index, col_index), (end_row, col_index)))
+                        # Can we capture diagonally
+                        for column_direction in [-1, 1]:
+                            diagonal_column = col_index + column_direction
+                            if (MiniChess.is_valid_coordinate((end_row, diagonal_column)) and
+                                game_state["board"][end_row][diagonal_column] != '.' and
+                                game_state["board"][end_row][diagonal_column][0] != game_state["turn"][0]):
+                                moves.append(((row_index, col_index), (end_row, diagonal_column)))
+                    elif piece[1] == 'N':
+                        directions = ((-1, -2), (-1, 2), (1, -2), (1, 2), (-2, -1), (-2, 1), (2, -1), (2, 1))
+                        end_positions = [
+                            (row_index + x, col_index + y) for x, y in directions
+                            if MiniChess.is_valid_coordinate((row_index + x, col_index + y)) and
+                            game_state["board"][row_index + x][col_index + y][0] != game_state["turn"][0]
+                            ]
+                        for knight_position in end_positions:
+                            moves.append(((row_index, col_index), knight_position))
         return
 
     """
@@ -87,8 +139,11 @@ class MiniChess:
         piece = game_state["board"][start_row][start_col]
         game_state["board"][start_row][start_col] = '.'
         game_state["board"][end_row][end_col] = piece
+        if piece == 'wp' and end_row == 0:
+            game_state["board"][end_row][end_col] = 'wQ'
+        elif piece == 'bp' and end_row == 4:
+            game_state["board"][end_row][end_col] = 'bQ'
         game_state["turn"] = "black" if game_state["turn"] == "white" else "white"
-
         return game_state
 
     """
@@ -120,6 +175,7 @@ class MiniChess:
         print("Welcome to Mini Chess! Enter moves as 'B2 B3'. Type 'exit' to quit.")
         while True:
             self.display_board(self.current_game_state)
+            MiniChess.print_valid_moves(self.valid_moves(self.current_game_state), self.current_game_state)
             move = input(f"{self.current_game_state['turn'].capitalize()} to move: ")
             if move.lower() == 'exit':
                 print("Game exited.")
