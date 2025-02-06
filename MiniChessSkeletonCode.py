@@ -54,7 +54,33 @@ class MiniChess:
     """
     def is_valid_move(self, game_state, move):
         # Check if move is in list of valid moves
-        return True
+        return move in self.valid_moves(game_state)
+
+    @staticmethod
+    def is_valid_coordinate(coordinate: tuple[int, int]):
+        indexed_row, indexed_col = coordinate
+        return -1 < indexed_row < 5 and -1 < indexed_col < 5
+
+    @staticmethod
+    def print_valid_moves(moves, game_state):
+        piece_translation = {
+            "p": 'Pawn',
+            "N": 'Knight',
+            "B": 'Bishop',
+            "Q": 'Queen',
+            "K": 'King',
+        }
+        column_translation = {
+            0: 'A',
+            1: 'B',
+            2: 'C',
+            3: 'D',
+            4: 'E',
+        }
+        for move in moves:
+            print((f'{piece_translation[game_state["board"][move[0][0]][move[0][1]][1]]} '
+                                     f'{column_translation[move[0][1]]}{5 - move[0][0]} to '
+                                     f'{column_translation[move[1][1]]}{5 - move[1][0]}'))
 
     """
     Returns a list of valid moves
