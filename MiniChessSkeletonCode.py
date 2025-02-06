@@ -113,8 +113,11 @@ class MiniChess:
         piece = game_state["board"][start_row][start_col]
         game_state["board"][start_row][start_col] = '.'
         game_state["board"][end_row][end_col] = piece
+        if piece == 'wp' and end_row == 0:
+            game_state["board"][end_row][end_col] = 'wQ'
+        elif piece == 'bp' and end_row == 4:
+            game_state["board"][end_row][end_col] = 'bQ'
         game_state["turn"] = "black" if game_state["turn"] == "white" else "white"
-
         return game_state
 
     """
@@ -146,6 +149,7 @@ class MiniChess:
         print("Welcome to Mini Chess! Enter moves as 'B2 B3'. Type 'exit' to quit.")
         while True:
             self.display_board(self.current_game_state)
+            MiniChess.print_valid_moves(self.valid_moves(self.current_game_state), self.current_game_state)
             move = input(f"{self.current_game_state['turn'].capitalize()} to move: ")
             if move.lower() == 'exit':
                 print("Game exited.")
