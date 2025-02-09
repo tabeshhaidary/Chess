@@ -6,6 +6,9 @@ import argparse
 class MiniChess:
     def __init__(self):
         self.current_game_state = self.init_board()
+        self.game_over = False
+        self.total_moves = 0
+        self.moves_without_capture = 0
 
     """
     Initialize the board
@@ -171,6 +174,16 @@ class MiniChess:
         end_row, end_col = end
         piece = game_state["board"][start_row][start_col]
         game_state["board"][start_row][start_col] = '.'
+        # Checking for win condition
+        if game_state["board"][end_row][end_col][1:2] == 'K':
+            self.game_over = True
+            game_state["board"][end_row][end_col] = piece
+            return game_state
+        # Check if there is a capture
+        if game_state["board"][end_row][end_col] == '.':
+            self.moves_without_capture += 1
+        else:
+            self.moves_without_capture = 0
         game_state["board"][end_row][end_col] = piece
         if piece == 'wp' and end_row == 0:
             game_state["board"][end_row][end_col] = 'wQ'
@@ -206,7 +219,7 @@ class MiniChess:
     """
     def play(self):
         print("Welcome to Mini Chess! Enter moves as 'B2 B3'. Type 'exit' to quit.")
-        while True:
+        while not self.game_over and self.moves_without_capture < 20:
             self.display_board(self.current_game_state)
             MiniChess.print_valid_moves(self.valid_moves(self.current_game_state), self.current_game_state)
             move = input(f"{self.current_game_state['turn'].capitalize()} to move: ")
@@ -220,6 +233,15 @@ class MiniChess:
                 continue
 
             self.make_move(self.current_game_state, move)
+            self.total_moves += 1
+
+        # If we reach here, the game is over
+        if self.game_over:
+            self.display_board(self.current_game_state)
+            print(f"\n{self.current_game_state['turn'].capitalize()} WINS in {self.total_moves} moves!")
+        elif self.moves_without_capture >= 20:
+            self.display_board(self.current_game_state)
+            print("Maximum turns reached, DRAW")
 
 if __name__ == "__main__":
     game = MiniChess()
