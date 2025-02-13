@@ -11,7 +11,7 @@ For the first deliverable, there is no AI capability and the game should be play
 - Max turns: This is the maximum number of turns allowed for this game. Once this limit is reached, the game will end.
 - Player 1 AI Y/N: Is player 1 an AI? Yes or No
 - Player 2 AI Y/N: Is player 1 an AI? Yes or No
-- Playing a moves: Enter moves as "B2 B3" and press enter.
+- Playing a move: Enter moves as "B2 B3" and press enter.
 
 ## Rules
 - There are no checkmates. To win the game, a player must capture the opposing King.
