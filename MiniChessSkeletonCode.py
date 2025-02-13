@@ -4,8 +4,19 @@ import time
 import argparse
 
 class MiniChess:
+    
     def __init__(self):
         self.current_game_state = self.init_board()
+        self.game_over = False
+        self.total_moves = 0
+        self.turns = 1
+        self.moves_without_capture = 0
+        (self.timeout,
+        self.max_turns,
+        self.p1_ai,
+        self.p2_ai,
+        self.alphabeta,
+        self.heuristic) = self.set_parameters()
 
     """
     Initialize the board
@@ -42,6 +53,16 @@ class MiniChess:
         print()
         print("     A   B   C   D   E")
         print()
+        
+    def get_formatted_board(self, game_state):
+        board_substrings = []
+        board_substrings.append('\n')
+        for i, row in enumerate(game_state["board"], start=1):
+            board_substrings.append(str(6-i) + "  " + ' '.join(piece.rjust(3) for piece in row) + '\n')
+        board_substrings.append('\n')
+        board_substrings.append('     A   B   C   D   E\n')
+        return ''.join(board_substrings)
+        
 
     """
     Check if the move is valid    
@@ -170,12 +191,23 @@ class MiniChess:
         start_row, start_col = start
         end_row, end_col = end
         piece = game_state["board"][start_row][start_col]
+        end_piece = game_state["board"][end_row][end_col]
         game_state["board"][start_row][start_col] = '.'
         game_state["board"][end_row][end_col] = piece
         if piece == 'wp' and end_row == 0:
             game_state["board"][end_row][end_col] = 'wQ'
         elif piece == 'bp' and end_row == 4:
             game_state["board"][end_row][end_col] = 'bQ'
+        self.total_moves += 1
+        self.moves_without_capture = self.moves_without_capture + 1 if end_piece == '.' else 0
+        if end_piece in ['bK', 'wK'] or self.moves_without_capture == 10:
+            self.game_over = True
+            return game_state
+        if piece[0] == 'b':
+            self.turns += 1
+        if self.turns > self.max_turns:
+            self.game_over = True
+            return game_state
         game_state["turn"] = "black" if game_state["turn"] == "white" else "white"
         return game_state
 
@@ -205,22 +237,70 @@ class MiniChess:
         - None
     """
     def play(self):
-        print("Welcome to Mini Chess! Enter moves as 'B2 B3'. Type 'exit' to quit.")
-        while True:
-            self.display_board(self.current_game_state)
-            MiniChess.print_valid_moves(self.valid_moves(self.current_game_state), self.current_game_state)
-            move = input(f"{self.current_game_state['turn'].capitalize()} to move: ")
-            if move.lower() == 'exit':
-                print("Game exited.")
-                exit(1)
+        with open(f'gameTrace-{self.alphabeta}-{self.timeout}-{self.max_turns}.txt', 'w') as file:
+            self.log_parameters(file)
+            if (self.max_turns == 0):
+                print('Maximum amount of turns is 0. Exiting program.')
+                file.write('Maximum amount of turns is 0. Exiting program.')
+                exit(2)
+            print("Welcome to Mini Chess! Enter moves as 'B2 B3'. Type 'exit' to quit.")
+            board = None
+            while not self.game_over:
+                file.write(f'\nTurn #{self.turns}')
+                board = self.get_formatted_board(self.current_game_state)
+                print(board)
+                file.write(f'{board}\n')
+                #MiniChess.print_valid_moves(self.valid_moves(self.current_game_state), self.current_game_state)
+                move = input(f"{self.current_game_state['turn'].capitalize()} to move: ")
+                file.write(f"{self.current_game_state['turn'].capitalize()} to move: {move}\n")
+                if move.lower() == 'exit':
+                    print("\nGame exited.")
+                    file.write('\nGame exited.')
+                    exit(1)
 
-            move = self.parse_input(move)
-            if not move or not self.is_valid_move(self.current_game_state, move):
-                print("Invalid move. Try again.")
-                continue
+                move = self.parse_input(move)
+                if not move or not self.is_valid_move(self.current_game_state, move):
+                    print("Invalid move. Try again.")
+                    file.write('Invalid move. Try again.')
+                    continue
 
-            self.make_move(self.current_game_state, move)
+                self.make_move(self.current_game_state, move)
 
+            # If we reach here, the game is over
+            board = self.get_formatted_board(self.current_game_state)
+            print(board)
+            file.write(board)
+            if self.moves_without_capture >= 20:
+                print('\nThere has been no captures in 10 turns, DRAW')
+                file.write('\nThere has been no captures in 10 turns, DRAW')
+            elif self.turns >= self.max_turns:
+                print('\nMaximum amount of turns reached, DRAW')
+                file.write('\nMaximum amount of turns reached, DRAW')
+            else:
+                print(f"\n{self.current_game_state['turn'].capitalize()} WINS in {self.turns} turns!")
+                file.write(f"\n{self.current_game_state['turn'].capitalize()} WINS in {self.turns} turns!")
+                
+    def log_parameters(self, file):
+        file.write(f'Max turns: {self.max_turns}\n')
+        file.write(f'{'Human' if self.p1_ai == 'n' else 'AI'} vs. {'Human' if self.p2_ai == 'n' else 'AI'}\n')
+        if self.p1_ai == 'y' or self.p2_ai == 'y':
+            file.write(f'alphabeta: {'enabled' if self.alphabeta == 'y' else 'disabled'}\n')
+            file.write(f'Heuristic: {self.heuristic}\n')
+            file.write(f'Timeout: {self.timeout}s\n')
+            
+    def set_parameters(self):
+        max_turns = int(input('Enter the maximum amount of turns: '))
+        p1_ai = input('Is player 1 an AI? (Y/N): ').lower()
+        p2_ai = input('Is player 2 an AI? (Y/N): ').lower()
+        timeout = False
+        alphabeta = False
+        heuristic = ''
+        if p1_ai == 'y' or p2_ai == 'y':
+            timeout = int(input('Enter the timeout in seconds: '))
+            alphabeta = input('Do you want to enable alphabeta? (Y/N): ').lower()
+            heuristic = input('Which heuristic do you want to use? (e0, e1, e2): ').lower()
+        return timeout, max_turns, p1_ai, p2_ai, alphabeta, heuristic
+            
 if __name__ == "__main__":
     game = MiniChess()
     game.play()
