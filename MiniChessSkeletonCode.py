@@ -200,7 +200,7 @@ class MiniChess:
             game_state["board"][end_row][end_col] = 'bQ'
         self.total_moves += 1
         self.moves_without_capture = self.moves_without_capture + 1 if end_piece == '.' else 0
-        if end_piece in ['bK', 'wK'] or self.moves_without_capture == 10:
+        if end_piece in ['bK', 'wK'] or self.moves_without_capture == 20:
             self.game_over = True
             return game_state
         if piece[0] == 'b':
